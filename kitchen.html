@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Iffat's Kitchen - Kitchen Display</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: monospace;
+            background: #1a1a1a;
+            color: #00ff00;
+            padding: 20px;
+        }
+        
+        .kitchen-display {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+            border-bottom: 2px solid #00ff00;
+            padding-bottom: 15px;
+        }
+        
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            color: #ff9900;
+        }
+        
+        .orders-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+            gap: 20px;
+        }
+        
+        .order-card {
+            background: #2a2a2a;
+            border: 1px solid #00ff00;
+            border-radius: 10px;
+            padding: 20px;
+            animation: blink 1s infinite;
+        }
+        
+        @keyframes blink {
+            0%, 100% { border-color: #00ff00; }
+            50% { border-color: #ff9900; }
+        }
+        
+        .order-header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 15px;
+            border-bottom: 1px solid #444;
+            padding-bottom: 10px;
+        }
+        
+        .order-number {
+            font-size: 1.3rem;
+            font-weight: bold;
+            color: #ff9900;
+        }
+        
+        .order-time {
+            font-size: 0.9rem;
+            color: #888;
+        }
+        
+        .order-items {
+            margin-bottom: 15px;
+        }
+        
+        .order-item {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+            padding: 5px;
+            background: #333;
+            border-radius: 4px;
+        }
+        
+        .item-name {
+            flex: 1;
+        }
+        
+        .item-quantity {
+            color: #00ff00;
+            font-weight: bold;
+            margin: 0 10px;
+        }
+        
+        .item-price {
+            color: #ff9900;
+        }
+        
+        .order-total {
+            text-align: right;
+            font-size: 1.2rem;
+            font-weight: bold;
+            color: #00ff00;
+            border-top: 1px solid #444;
+            padding-top: 10px;
+        }
+        
+        .no-orders {
+            text-align: center;
+            grid-column: 1 / -1;
+            padding: 50px;
+            color: #888;
+            font-size: 1.2rem;
+        }
+        
+        .status-badge {
+            background: #ff9900;
+            color: #000;
+            padding: 3px 10px;
+            border-radius: 12px;
+            font-size: 0.8rem;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <div class="kitchen-display">
+        <div class="header">
+            <h1>IFFAT'S KITCHEN</h1>
+            <h2>KITCHEN DISPLAY SYSTEM</h2>
+            <div id="currentTime"></div>
+        </div>
+        
+        <div class="orders-grid" id="ordersGrid">
+            <div class="no-orders" id="noOrders">
+                <h3>NO ORDERS PENDING</h3>
+                <p>Waiting for new orders...</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Check for new orders every 3 seconds
+        function checkForOrders() {
+            const kitchenOrders = JSON.parse(localStorage.getItem('kitchenOrders') || '[]');
+            const ordersGrid = document.getElementById('ordersGrid');
+            const noOrders = document.getElementById('noOrders');
+            
+            if (kitchenOrders.length === 0) {
+                noOrders.style.display = 'block';
+                ordersGrid.innerHTML = '';
+                ordersGrid.appendChild(noOrders);
+                return;
+            }
+            
+            noOrders.style.display = 'none';
+            
+            let ordersHTML = '';
+            
+            kitchenOrders.forEach(order => {
+                ordersHTML += `
+                    <div class="order-card">
+                        <div class="order-header">
+                            <div class="order-number">Order #${order.orderNumber}</div>
+                            <div class="status-badge">NEW</div>
+                            <div class="order-time">${new Date(order.timestamp).toLocaleTimeString()}</div>
+                        </div>
+                        
+                        <div class="order-items">
+                            ${order.items.map(item => `
+                                <div class="order-item">
+                                    <span class="item-quantity">${item.quantity}x</span>
+                                    <span class="item-name">${item.name}</span>
+                                    <span class="item-price">$${(item.price * item.quantity).toFixed(2)}</span>
+                                </div>
+                            `).join('')}
+                        </div>
+                        
+                        <div class="order-total">
+                            TOTAL: $${order.total.toFixed(2)}
+                        </div>
+                    </div>
+                `;
+            });
+            
+            ordersGrid.innerHTML = ordersHTML;
+        }
+        
+        // Update current time
+        function updateTime() {
+            const now = new Date();
+            document.getElementById('currentTime').textContent = 
+                `${now.toLocaleDateString()} ${now.toLocaleTimeString()}`;
+        }
+        
+        // Auto-refresh
+        setInterval(checkForOrders, 3000);
+        setInterval(updateTime, 1000);
+        
+        // Initial load
+        checkForOrders();
+        updateTime();
+    </script>
+</body>
+</html>
