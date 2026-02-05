@@ -2,51 +2,72 @@ const express = require('express');
 const cors = require('cors');
 const fs = require('fs').promises;
 const path = require('path');
+const http = require('http');
+const { Server } = require('socket.io');
 
 // Create Express app
 const app = express();
+const server = http.createServer(app);
+const io = new Server(server, {
+    cors: {
+        origin: "*",
+        methods: ["GET", "POST"]
+    }
+});
+
 const PORT = 3000;
 
 // Middleware
 app.use(cors());
 app.use(express.json());
-app.use(express.static('.')); // Serve the HTML file
+app.use(express.static('.'));
 
-// In-memory storage (for demo - would use database in production)
+// Data storage
+let orders = [];
 let orderCounter = 1001;
-let salesData = [];
 
-// Serve the main page
+// Serve main POS interface
 app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'index.html'));
 });
 
-// Checkout endpoint
-app.post('/checkout', async (req, res) => {
+// Serve kitchen display
+app.get('/kitchen', (req, res) => {
+    res.sendFile(path.join(__dirname, 'kitchen.html'));
+});
+
+// API: Process checkout
+app.post('/api/checkout', async (req, res) => {
     try {
         const order = req.body;
-        const orderNumber = orderCounter++;
         
-        // Add order number and timestamp
-        const completeOrder = {
-            ...order,
-            orderNumber: orderNumber,
-            date: new Date().toISOString(),
-            status: 'completed'
-        };
+        // Assign order number if not provided
+        if (!order.orderNumber) {
+            order.orderNumber = orderCounter++;
+        }
         
-        // Save to memory
-        salesData.push(completeOrder);
+        order.timestamp = new Date().toISOString();
+        order.status = 'pending';
         
-        // Save to file (simulating database)
-        await saveOrderToFile(completeOrder);
+        // Save order
+        orders.unshift(order);
         
-        console.log(`✅ Order #${orderNumber} received: $${order.total.toFixed(2)}`);
+        // Keep only last 50 orders in memory
+        if (orders.length > 50) {
+            orders.pop();
+        }
         
-        // Send success response
+        // Save to file
+        await saveOrder(order);
+        
+        // Broadcast to kitchen display
+        io.emit('new-order', order);
+        
+        console.log(`✅ Order #${order.orderNumber} received: $${order.total.toFixed(2)}`);
+        
         res.json({
             success: true,
-            orderNumber: orderNumber,
+            orderNumber: order.orderNumber,
             message: 'Order processed successfully'
         });
         
@@ -59,55 +80,101 @@ app.post('/checkout', async (req, res) => {
     }
 });
 
-// Get sales report
-app.get('/sales-report', (req, res) => {
-    const totalSales = salesData.reduce((sum, order) => sum + order.total, 0);
-    const totalOrders = salesData.length;
-    
+// API: Get orders
+app.get('/api/orders', (req, res) => {
     res.json({
-        totalOrders: totalOrders,
-        totalRevenue: totalSales.toFixed(2),
-        averageOrderValue: totalOrders > 0 ? (totalSales / totalOrders).toFixed(2) : 0,
-        orders: salesData
+        success: true,
+        count: orders.length,
+        orders: orders
     });
 });
 
+// API: Get sales report
+app.get('/api/sales-report', (req, res) => {
+    const today = new Date().toISOString().split('T')[0];
+    const todaySales = orders.filter(order => 
+        order.timestamp.startsWith(today)
+    );
+    
+    const totalRevenue = todaySales.reduce((sum, order) => sum + order.total, 0);
+    const totalOrders = todaySales.length;
+    
+    res.json({
+        success: true,
+        date: today,
+        totalOrders: totalOrders,
+        totalRevenue: totalRevenue.toFixed(2),
+        averageOrder: totalOrders > 0 ? (totalRevenue / totalOrders).toFixed(2) : 0,
+        orders: todaySales
+    });
+});
+
+// API: Clear orders (for testing)
+app.post('/api/clear-orders', (req, res) => {
+    orders = [];
+    orderCounter = 1001;
+    res.json({ success: true, message: 'Orders cleared' });
+});
+
 // Save order to file
-async function saveOrderToFile(order) {
+async function saveOrder(order) {
     try {
-        const fileName = `orders/order_${order.orderNumber}.json`;
+        const ordersDir = path.join(__dirname, 'orders');
         
         // Create orders directory if it doesn't exist
-        await fs.mkdir('orders', { recursive: true });
+        await fs.mkdir(ordersDir, { recursive: true });
         
-        // Write order to file
-        await fs.writeFile(fileName, JSON.stringify(order, null, 2));
+        // Save individual order
+        const orderFile = path.join(ordersDir, `order_${order.orderNumber}.json`);
+        await fs.writeFile(orderFile, JSON.stringify(order, null, 2));
         
-        // Also append to daily sales file
-        const today = new Date().toISOString().split('T')[0];
-        const dailyFile = `orders/daily_${today}.json`;
+        // Append to daily file
+        const date = new Date().toISOString().split('T')[0];
+        const dailyFile = path.join(ordersDir, `daily_${date}.json`);
         
         let dailyOrders = [];
         try {
             const data = await fs.readFile(dailyFile, 'utf8');
             dailyOrders = JSON.parse(data);
         } catch (err) {
-            // File doesn't exist yet, that's fine
+            // File doesn't exist, that's okay
         }
         
         dailyOrders.push(order);
         await fs.writeFile(dailyFile, JSON.stringify(dailyOrders, null, 2));
+        
+        console.log(`💾 Order #${order.orderNumber} saved to file`);
         
     } catch (error) {
         console.error('Error saving order:', error);
     }
 }
 
+// Socket.io connection
+io.on('connection', (socket) => {
+    console.log('📱 New device connected to kitchen display');
+    
+    // Send current orders to new connection
+    socket.emit('current-orders', orders);
+    
+    socket.on('disconnect', () => {
+        console.log('📱 Device disconnected from kitchen display');
+    });
+});
+
 // Start server
-app.listen(PORT, () => {
-    console.log(`🚀 UP Kitchen POS Server running at:`);
+server.listen(PORT, () => {
+    console.log('\n' + '='.repeat(50));
+    console.log('🚀 IFFAT\'S KITCHEN POS SYSTEM STARTED');
+    console.log('='.repeat(50));
+    console.log(`\n📱 Customer Interface:`);
     console.log(`   ➡️  http://localhost:${PORT}`);
-    console.log(`\n📱 Open the above link in your browser`);
-    console.log(`💳 To view sales report: http://localhost:${PORT}/sales-report`);
-    console.log(`\n🛎️  Server is ready to take orders!`);
+    console.log(`\n👨‍🍳 Kitchen Display:`);
+    console.log(`   ➡️  http://localhost:${PORT}/kitchen`);
+    console.log(`\n📊 Sales Report:`);
+    console.log(`   ➡️  http://localhost:${PORT}/api/sales-report`);
+    console.log(`\n🛒 View Orders:`);
+    console.log(`   ➡️  http://localhost:${PORT}/api/orders`);
+    console.log(`\n✅ Server is ready! Open the links above in your browser.`);
+    console.log('\n' + '='.repeat(50));
 });
