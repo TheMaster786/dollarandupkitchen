@@ -1,0 +1,623 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>UP Kitchen - Order Kiosk</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+        
+        .kiosk-container {
+            background: white;
+            border-radius: 25px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            width: 100%;
+            max-width: 800px;
+            overflow: hidden;
+        }
+        
+        .header {
+            background: linear-gradient(to right, #ff6b6b, #ee5a24);
+            color: white;
+            padding: 25px;
+            text-align: center;
+        }
+        
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 5px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 15px;
+        }
+        
+        .header h1 i {
+            color: #ffd700;
+        }
+        
+        .header p {
+            opacity: 0.9;
+            font-size: 1.1rem;
+        }
+        
+        .main-content {
+            display: flex;
+            min-height: 500px;
+        }
+        
+        .menu-section {
+            flex: 1;
+            padding: 25px;
+            background: #f8f9fa;
+            border-right: 3px dashed #dee2e6;
+        }
+        
+        .menu-category {
+            margin-bottom: 30px;
+        }
+        
+        .menu-category h3 {
+            color: #333;
+            font-size: 1.4rem;
+            margin-bottom: 15px;
+            padding-bottom: 8px;
+            border-bottom: 2px solid #ff6b6b;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .menu-items {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+        
+        .menu-item {
+            background: white;
+            padding: 15px;
+            border-radius: 12px;
+            border-left: 4px solid #4CAF50;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 3px 10px rgba(0,0,0,0.08);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .menu-item:hover {
+            transform: translateX(5px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            border-left-color: #ff6b6b;
+        }
+        
+        .item-info {
+            flex: 1;
+        }
+        
+        .item-name {
+            font-weight: 600;
+            color: #333;
+            font-size: 1.1rem;
+        }
+        
+        .item-price {
+            color: #ee5a24;
+            font-weight: bold;
+            font-size: 1.2rem;
+        }
+        
+        .order-section {
+            flex: 1;
+            padding: 25px;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .order-title {
+            font-size: 1.5rem;
+            color: #333;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .current-order {
+            flex: 1;
+            background: white;
+            border: 2px solid #e9ecef;
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 20px;
+            overflow-y: auto;
+            max-height: 300px;
+        }
+        
+        .order-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 0;
+            border-bottom: 1px dashed #dee2e6;
+        }
+        
+        .item-controls {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .quantity-btn {
+            background: #6c757d;
+            color: white;
+            border: none;
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            cursor: pointer;
+            font-size: 1.2rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background 0.2s;
+        }
+        
+        .quantity-btn:hover {
+            background: #545b62;
+        }
+        
+        .quantity {
+            font-weight: bold;
+            min-width: 30px;
+            text-align: center;
+        }
+        
+        .item-total {
+            font-weight: bold;
+            color: #333;
+        }
+        
+        .order-summary {
+            background: linear-gradient(to right, #f8f9fa, #e9ecef);
+            padding: 20px;
+            border-radius: 15px;
+            margin-top: auto;
+        }
+        
+        .summary-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10px;
+            font-size: 1.1rem;
+        }
+        
+        .total-row {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #ee5a24;
+            border-top: 2px solid #dee2e6;
+            padding-top: 10px;
+            margin-top: 10px;
+        }
+        
+        .checkout-btn {
+            background: linear-gradient(to right, #4CAF50, #45a049);
+            color: white;
+            border: none;
+            padding: 20px;
+            font-size: 1.4rem;
+            font-weight: bold;
+            border-radius: 15px;
+            cursor: pointer;
+            margin-top: 20px;
+            width: 100%;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 15px;
+        }
+        
+        .checkout-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 20px rgba(76, 175, 80, 0.3);
+            background: linear-gradient(to right, #45a049, #3d8b40);
+        }
+        
+        .checkout-btn:active {
+            transform: translateY(-1px);
+        }
+        
+        .remove-btn {
+            background: #ff6b6b;
+            color: white;
+            border: none;
+            padding: 5px 12px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            margin-left: 10px;
+        }
+        
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: #4CAF50;
+            color: white;
+            padding: 15px 25px;
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+            display: none;
+            animation: slideIn 0.3s ease;
+            z-index: 1000;
+        }
+        
+        @keyframes slideIn {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+        
+        .empty-order {
+            text-align: center;
+            color: #6c757d;
+            padding: 40px 20px;
+            font-style: italic;
+        }
+    </style>
+</head>
+<body>
+    <div class="kiosk-container">
+        <div class="header">
+            <h1><i class="fas fa-utensils"></i> UP Kitchen <i class="fas fa-fire"></i></h1>
+            <p>Touch Screen Ordering System - Business Dollar POS</p>
+        </div>
+        
+        <div class="main-content">
+            <!-- LEFT SIDE: MENU -->
+            <div class="menu-section">
+                <div class="menu-category">
+                    <h3><i class="fas fa-pizza-slice"></i> Pizza</h3>
+                    <div class="menu-items">
+                        <div class="menu-item" onclick="addItem('Pepperoni Pizza', 16.99)">
+                            <div class="item-info">
+                                <div class="item-name">Pepperoni Pizza</div>
+                            </div>
+                            <div class="item-price">$16.99</div>
+                        </div>
+                        <div class="menu-item" onclick="addItem('Cheese Pizza', 14.99)">
+                            <div class="item-info">
+                                <div class="item-name">Cheese Pizza</div>
+                            </div>
+                            <div class="item-price">$14.99</div>
+                        </div>
+                        <div class="menu-item" onclick="addItem('Vegetarian Pizza', 17.99)">
+                            <div class="item-info">
+                                <div class="item-name">Vegetarian Pizza</div>
+                            </div>
+                            <div class="item-price">$17.99</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="menu-category">
+                    <h3><i class="fas fa-hamburger"></i> Burgers</h3>
+                    <div class="menu-items">
+                        <div class="menu-item" onclick="addItem('Classic Burger', 12.99)">
+                            <div class="item-info">
+                                <div class="item-name">Classic Burger</div>
+                            </div>
+                            <div class="item-price">$12.99</div>
+                        </div>
+                        <div class="menu-item" onclick="addItem('Cheeseburger', 13.99)">
+                            <div class="item-info">
+                                <div class="item-name">Cheeseburger</div>
+                            </div>
+                            <div class="item-price">$13.99</div>
+                        </div>
+                        <div class="menu-item" onclick="addItem('Bacon Burger', 15.99)">
+                            <div class="item-info">
+                                <div class="item-name">Bacon Burger</div>
+                            </div>
+                            <div class="item-price">$15.99</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="menu-category">
+                    <h3><i class="fas fa-wine-glass-alt"></i> Drinks</h3>
+                    <div class="menu-items">
+                        <div class="menu-item" onclick="addItem('Soda', 2.99)">
+                            <div class="item-info">
+                                <div class="item-name">Soda</div>
+                            </div>
+                            <div class="item-price">$2.99</div>
+                        </div>
+                        <div class="menu-item" onclick="addItem('Iced Tea', 2.49)">
+                            <div class="item-info">
+                                <div class="item-name">Iced Tea</div>
+                            </div>
+                            <div class="item-price">$2.49</div>
+                        </div>
+                        <div class="menu-item" onclick="addItem('Bottled Water', 1.99)">
+                            <div class="item-info">
+                                <div class="item-name">Bottled Water</div>
+                            </div>
+                            <div class="item-price">$1.99</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="menu-category">
+                    <h3><i class="fas fa-leaf"></i> Salads</h3>
+                    <div class="menu-items">
+                        <div class="menu-item" onclick="addItem('Caesar Salad', 10.99)">
+                            <div class="item-info">
+                                <div class="item-name">Caesar Salad</div>
+                            </div>
+                            <div class="item-price">$10.99</div>
+                        </div>
+                        <div class="menu-item" onclick="addItem('Garden Salad', 9.99)">
+                            <div class="item-info">
+                                <div class="item-name">Garden Salad</div>
+                            </div>
+                            <div class="item-price">$9.99</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- RIGHT SIDE: ORDER -->
+            <div class="order-section">
+                <div class="order-title">
+                    <i class="fas fa-shopping-cart"></i> Your Order
+                </div>
+                
+                <div class="current-order" id="currentOrder">
+                    <!-- Order items will appear here -->
+                    <div class="empty-order" id="emptyOrderMessage">
+                        <i class="fas fa-shopping-cart fa-2x" style="margin-bottom: 15px; opacity: 0.5;"></i>
+                        <p>No items yet.<br>Tap items on the left to add them!</p>
+                    </div>
+                </div>
+                
+                <div class="order-summary">
+                    <div class="summary-row">
+                        <span>Subtotal:</span>
+                        <span id="subtotal">$0.00</span>
+                    </div>
+                    <div class="summary-row">
+                        <span>Tax (8%):</span>
+                        <span id="tax">$0.00</span>
+                    </div>
+                    <div class="summary-row total-row">
+                        <span>TOTAL:</span>
+                        <span id="total">$0.00</span>
+                    </div>
+                    
+                    <button class="checkout-btn" onclick="checkoutOrder()">
+                        <i class="fas fa-credit-card"></i> CHECKOUT NOW
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="notification" id="notification"></div>
+
+    <script>
+        // Current order items
+        let orderItems = [];
+        
+        // Add item to order
+        function addItem(name, price) {
+            // Check if item already exists
+            const existingItem = orderItems.find(item => item.name === name);
+            
+            if (existingItem) {
+                existingItem.quantity += 1;
+            } else {
+                orderItems.push({
+                    name: name,
+                    price: price,
+                    quantity: 1
+                });
+            }
+            
+            updateOrderDisplay();
+            showNotification(`Added ${name} to order!`);
+        }
+        
+        // Update quantity of an item
+        function updateQuantity(name, change) {
+            const item = orderItems.find(item => item.name === name);
+            
+            if (item) {
+                item.quantity += change;
+                
+                // Remove if quantity is 0 or less
+                if (item.quantity <= 0) {
+                    orderItems = orderItems.filter(i => i.name !== name);
+                    showNotification(`Removed ${name} from order`);
+                } else {
+                    showNotification(`Updated ${name}: ${item.quantity}`);
+                }
+            }
+            
+            updateOrderDisplay();
+        }
+        
+        // Remove item completely
+        function removeItem(name) {
+            orderItems = orderItems.filter(item => item.name !== name);
+            showNotification(`Removed ${name} from order`);
+            updateOrderDisplay();
+        }
+        
+        // Update the order display
+        function updateOrderDisplay() {
+            const orderContainer = document.getElementById('currentOrder');
+            const emptyMessage = document.getElementById('emptyOrderMessage');
+            
+            // Show/hide empty message
+            if (orderItems.length === 0) {
+                emptyMessage.style.display = 'block';
+                orderContainer.innerHTML = '';
+                orderContainer.appendChild(emptyMessage);
+            } else {
+                emptyMessage.style.display = 'none';
+                
+                let orderHTML = '';
+                let subtotal = 0;
+                
+                orderItems.forEach(item => {
+                    const itemTotal = item.price * item.quantity;
+                    subtotal += itemTotal;
+                    
+                    orderHTML += `
+                        <div class="order-item">
+                            <div>
+                                <strong>${item.name}</strong><br>
+                                <small>$${item.price.toFixed(2)} each</small>
+                            </div>
+                            <div class="item-controls">
+                                <button class="quantity-btn" onclick="updateQuantity('${item.name}', -1)">-</button>
+                                <span class="quantity">${item.quantity}</span>
+                                <button class="quantity-btn" onclick="updateQuantity('${item.name}', 1)">+</button>
+                                <button class="remove-btn" onclick="removeItem('${item.name}')">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                                <span class="item-total">$${itemTotal.toFixed(2)}</span>
+                            </div>
+                        </div>
+                    `;
+                });
+                
+                orderContainer.innerHTML = orderHTML;
+            }
+            
+            // Calculate totals
+            const taxRate = 0.08;
+            const tax = subtotal * taxRate;
+            const total = subtotal + tax;
+            
+            // Update summary
+            document.getElementById('subtotal').textContent = `$${subtotal.toFixed(2)}`;
+            document.getElementById('tax').textContent = `$${tax.toFixed(2)}`;
+            document.getElementById('total').textContent = `$${total.toFixed(2)}`;
+        }
+        
+        // Show notification
+        function showNotification(message) {
+            const notification = document.getElementById('notification');
+            notification.textContent = message;
+            notification.style.display = 'block';
+            
+            setTimeout(() => {
+                notification.style.display = 'none';
+            }, 2000);
+        }
+        
+        // Checkout function
+        async function checkoutOrder() {
+            if (orderItems.length === 0) {
+                showNotification("Please add items to your order first!");
+                return;
+            }
+            
+            // Calculate totals
+            const subtotal = orderItems.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+            const tax = subtotal * 0.08;
+            const total = subtotal + tax;
+            
+            // Create order object
+            const order = {
+                items: orderItems,
+                subtotal: subtotal,
+                tax: tax,
+                total: total,
+                timestamp: new Date().toISOString()
+            };
+            
+            try {
+                // Send to backend
+                const response = await fetch('http://localhost:3000/checkout', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(order)
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    showNotification(`Order #${result.orderNumber} placed successfully! Total: $${total.toFixed(2)}`);
+                    
+                    // Print receipt in console (simulated)
+                    console.log('=== UP KITCHEN RECEIPT ===');
+                    console.log(`Order #: ${result.orderNumber}`);
+                    console.log(`Date: ${new Date().toLocaleString()}`);
+                    console.log('--------------------------');
+                    orderItems.forEach(item => {
+                        console.log(`${item.quantity}x ${item.name}: $${(item.price * item.quantity).toFixed(2)}`);
+                    });
+                    console.log('--------------------------');
+                    console.log(`Subtotal: $${subtotal.toFixed(2)}`);
+                    console.log(`Tax: $${tax.toFixed(2)}`);
+                    console.log(`TOTAL: $${total.toFixed(2)}`);
+                    console.log('=== THANK YOU! ===');
+                    
+                    // Clear order
+                    orderItems = [];
+                    updateOrderDisplay();
+                    
+                } else {
+                    showNotification('Checkout failed. Please try again.');
+                }
+                
+            } catch (error) {
+                console.error('Error:', error);
+                // Fallback if server is not running
+                showNotification(`Order placed! Total: $${total.toFixed(2)} (Demo Mode)`);
+                
+                // Clear order
+                orderItems = [];
+                updateOrderDisplay();
+            }
+        }
+        
+        // Make menu items touch-friendly
+        document.addEventListener('DOMContentLoaded', function() {
+            const menuItems = document.querySelectorAll('.menu-item');
+            menuItems.forEach(item => {
+                item.addEventListener('touchstart', function() {
+                    this.style.transform = 'scale(0.95)';
+                });
+                
+                item.addEventListener('touchend', function() {
+                    this.style.transform = '';
+                });
+            });
+        });
+    </script>
+</body>
+</html>
